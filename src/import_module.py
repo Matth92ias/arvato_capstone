@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 
 def import_raw_data(name,path):
     '''
@@ -22,4 +23,4 @@ def import_raw_data(name,path):
         data[col]= pd.to_numeric(np.where(data[col].isin(['X','XX']),-1, data[col]))
     data['CAMEO_DEU_2015'] = np.where(data['CAMEO_DEU_2015'].isin(['X','XX']),np.nan, data['CAMEO_DEU_2015'])
 
-    return customers
+    return data
