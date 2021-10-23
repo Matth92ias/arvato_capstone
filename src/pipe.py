@@ -83,12 +83,12 @@ def calculate_WSS(data, kmax,verbose=True):
     returns array with wss for different cluster numbers
     '''
 
-      # as in https://medium.com/analytics-vidhya/how-to-determine-the-optimal-k-for-k-means-708505d204eb'
+    # as in https://medium.com/analytics-vidhya/how-to-determine-the-optimal-k-for-k-means-708505d204eb'
     sse = []
     for k in range(1, kmax+1):
         kmeans = MiniBatchKMeans(n_clusters = k).fit(data)
         centroids = kmeans.cluster_centers_
-        pred_clusters = kmeans.predict(points)
+        pred_clusters = kmeans.predict(data)
         curr_sse = 0
 
         # calculate square of Euclidean distance of each point from its cluster center and add to current WSS
@@ -103,7 +103,7 @@ def calculate_WSS(data, kmax,verbose=True):
     return sse
 
 
-def get_cluster_comp_df(cluster_pipeline,all_vars):
+def get_cluster_comp_df(cluster_pipeline,all_vars,num_vars):
 
     # get values of cluster_means, inverse_transform pca and save in dataframe
     cluster_centers = cluster_pipeline.named_steps['kmeans'].cluster_centers_
@@ -112,6 +112,21 @@ def get_cluster_comp_df(cluster_pipeline,all_vars):
 
     # rename attributes with real names
     cl_comp_df.columns = all_vars
+
+    # for numeric variables also the standardization has to be inversed
+    # separate numeric and not numeric
+    cl_comp_df_numeric = cl_comp_df.loc[:,num_vars]
+    cl_comp_df_not_numeric = cl_comp_df.loc[:,~cl_comp_df.columns.isin(num_vars)]
+
+    # inverse transform numeric
+    numeric_transformed = cluster_pipeline.named_steps['transform'].named_transformers_['numeric']['scale'].inverse_transform(cl_comp_df_numeric)
+
+    # transform numeric back to dataframe
+    numeric_transformed = pd.DataFrame(numeric_transformed)
+    numeric_transformed.columns = num_vars
+
+    # concat both numeric and nonnumeric together
+    cl_comp_df = pd.concat([numeric_transformed,cl_comp_df_not_numeric],axis=1)
 
     # reshape such that every attribute is a row and all clusters are columns
     cl_comp_df = cl_comp_df.reset_index().rename(
