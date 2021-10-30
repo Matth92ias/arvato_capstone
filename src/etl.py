@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-import ipdb
-
 
 def prepare_data_dict(column_names,data_dir):
     '''
